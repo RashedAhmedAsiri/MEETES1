@@ -310,6 +310,7 @@ function teacherLogin(msg=''){
       <div id="lerr" role="alert">${msg ? D.t(msg, '#b03a2e', w) : ''}</div>
       <div class="row center">${btn({id:'lgo', cls:'green', label:'دخول'})}${btn({id:'lback', cls:'sand', label:'رجوع إلى اللعبة'})}</div>
       <div class="hint">${D.s('للعرض أمام اللجنة: اسم المستخدم teacher والرمز 1234. يمكن تغيير الرمز من الإعدادات.', '#6b6450', w)}</div>
+      ${D.s(CREDIT, '#6b6450', w)}
     </div></section>`, {fn:teacherLogin, safe:true, dense:true});
   const go = () => {
     const u = $('#tu').value.trim().toLowerCase(), pw = $('#tp').value.trim();
@@ -460,6 +461,8 @@ const dashSettings = guard(function(){
          'تحفظ النتائج على هذا الجهاز فقط، ولا ترسل إلى أي مكان.',
          'لوحة المعلمة محمية برمز، وصفحة ولي الأمر خلف سؤال للكبار.',
          'عند اعتماد اللعبة في أكثر من فصل تحتاج المزامنة إلى خادم بحسابات للمعلمات (ضمن لوحة الإدارة المستقبلية).'].map(t => `<div class="lrow static">${S_('i_check')}${D.s(t, '#1b1e2b', w - 20)}</div>`).join('')}</div>
+    <div class="pan sec"><div class="sec-h">${S_('i_star')}${D.h('عن اللعبة')}</div>
+      <div class="lrow static">${D.t('مغامرة برعم في وطننا')}</div><div class="lrow static">${D.t(CREDIT)}</div></div>
     <div id="setMsg" role="status"></div>`), {fn:dashSettings, safe:true, dense:true});
   wireShell();
   $$('[data-set]').forEach(b => b.onclick = () => { sfx.tap(); const k = b.dataset.set, on = b.dataset.v === '1';
@@ -488,6 +491,7 @@ function parentGate(tries=0){
       <div class="keypad">${[7,8,9,4,5,6,1,2,3].map(d => `<button class="pbtn" data-d="${d}" aria-label="${d}">${T(num(d),{size:16, color:'#1b1e2b'})}</button>`).join('')}
         <button class="pbtn sand" id="kDel" aria-label="امسح">${S_('i_back')}</button><button class="pbtn" data-d="0" aria-label="0">${T(num(0),{size:16, color:'#1b1e2b'})}</button><button class="pbtn green" id="kOk" aria-label="تأكيد">${S_('i_check')}</button></div>
       ${btn({id:'pBack', cls:'sand', label:'رجوع إلى اللعبة'})}
+      ${D.s(CREDIT, '#6b6450')}
     </div></section>`, {fn:parentGate, safe:true, dense:true});
   const draw = () => { $('#disp').innerHTML = typed ? D.big(num(typed), '#1b1e2b') : D.s('اكتب الإجابة'); }; draw();
   $$('[data-d]').forEach(k => k.onclick = () => { sfx.tap(); if(typed.length < 3){ typed += k.dataset.d; draw(); } });

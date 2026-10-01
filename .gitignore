@@ -1,0 +1,2 @@
+# downloaded Python packages never belong in the game
+*.whl

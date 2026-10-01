@@ -1247,6 +1247,48 @@ function medalCanvas(){
   const sp = renderGrid(gridFrom(SPR.seedling), {}); R.canvas(sp, cx-Math.floor(sp.width/2), cy-Math.floor(sp.height/2)+1);
   return R.done();
 }
+/* ---------- the flag of Saudi Arabia on its pole, waving gently. fw x fh is the cloth (2:3) in art
+   pixels; the pole runs from the gold finial down to poleBottom. The cloth is drawn at the screen's
+   own resolution (k device pixels per art pixel) so the Shahada, set in Amiri, stays sharp and
+   correct at any size; the wave moves whole art-pixel columns, so its edges match the pixel art.
+   As on the flag: green field, the Shahada in white, and under it a white sword whose hilt is on
+   the fly side and whose point faces the hoist. */
+const SHAHADA = 'لا إله إلا الله محمد رسول الله';
+function flagCanvas(fw, fh, poleBottom, k){
+  const amp = Math.max(1, Math.round(fh*.045)), y0 = 3 + amp, artW = fw + 2, artH = Math.max(y0 + fh + amp + 1, poleBottom);
+  // the flat cloth
+  const F = document.createElement('canvas'); F.width = fw*k; F.height = fh*k; const f = F.getContext('2d');
+  f.fillStyle = '#006c35'; f.fillRect(0, 0, F.width, F.height);
+  f.fillStyle = '#ffffff'; f.direction = 'rtl'; f.textAlign = 'center'; f.textBaseline = 'alphabetic';
+  f.font = `700 100px Amiri, "Baloo Bhaijaan 2", serif`;
+  const m = f.measureText(SHAHADA), scale = (F.width*.8)/m.width;
+  const px = 100*scale; f.font = `700 ${px}px Amiri, "Baloo Bhaijaan 2", serif`;
+  const mm = f.measureText(SHAHADA), asc = mm.actualBoundingBoxAscent || px*.9, desc = mm.actualBoundingBoxDescent || px*.3;
+  // the flag's thuluth script is tall: the line is drawn taller than the font's own proportions
+  const tall = Math.min(1.7, (F.height*.36)/(asc + desc)), textMid = F.height*.38;
+  f.save(); f.translate(F.width/2, textMid); f.scale(1, tall); f.fillText(SHAHADA, 0, (asc - desc)/2); f.restore();
+  // the sword: point towards the hoist (left), hilt on the fly side (right)
+  { const W = F.width, H = F.height, yb = H*.74, t = Math.max(k, H*.045);
+    const tip = W*.17, guard = W*.71, grip = W*.8;
+    f.beginPath(); f.moveTo(tip, yb + t*.5); f.lineTo(tip + t*3, yb - t*.5); f.lineTo(guard, yb - t*.5); f.lineTo(guard, yb + t*.5); f.closePath(); f.fill();
+    f.fillRect(guard, yb - t*1.6, Math.max(k*.8, W*.012), t*3.2);                         // guard
+    f.fillRect(guard + W*.012, yb - t*.6, grip - guard - W*.012, t*1.2);                 // grip
+    f.beginPath(); f.moveTo(grip, yb - t*.6); f.lineTo(grip + t*1.6, yb + t*1.6); f.lineTo(grip + t*.4, yb + t*1.9); f.lineTo(grip - t*.2, yb + t*.6); f.closePath(); f.fill();   // pommel curling down
+  }
+  // the waving cloth: each art column shifted up or down, and lit or shaded by its slope
+  const C = document.createElement('canvas'); C.width = artW*k; C.height = artH*k; const c = C.getContext('2d');
+  const lam = fw*.85, ph = .6, dy = i => Math.round(amp*Math.sin(2*Math.PI*i/lam - ph)*Math.min(1, i/(fw*.2)));
+  for(let i=0;i<fw;i++) c.drawImage(F, i*k, 0, k, F.height, (2+i)*k, (y0 + dy(i))*k, k, F.height);
+  c.globalCompositeOperation = 'source-atop';
+  for(let i=0;i<fw;i++){ const s = Math.cos(2*Math.PI*i/lam - ph)*Math.min(1, i/(fw*.2));
+    if(s > .45){ c.fillStyle = 'rgba(255,255,255,.13)'; c.fillRect((2+i)*k, 0, k, C.height); }
+    else if(s < -.45){ c.fillStyle = 'rgba(0,0,0,.2)'; c.fillRect((2+i)*k, 0, k, C.height); } }
+  c.globalCompositeOperation = 'source-over';
+  // pole and gold finial
+  c.fillStyle = '#f2f2ee'; c.fillRect(0, 2*k, k, (artH-2)*k); c.fillStyle = '#9aa3a8'; c.fillRect(k, 2*k, k, (artH-2)*k);
+  c.fillStyle = '#c98a1a'; c.fillRect(0, 0, 2*k, 2*k); c.fillStyle = '#f7c948'; c.fillRect(0, 0, k, k);
+  return {canvas:C, artW, artH, top:y0};
+}
 function genTag(key, make, cls=''){ return imgTag(cacheCanvas(key, make), cls); }
 
 /* ---------- textures used as CSS backgrounds (same integer scale) */

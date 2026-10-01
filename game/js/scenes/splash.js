@@ -24,6 +24,7 @@ const HEX = {
   bird:'#4a3f5e',
 };
 const C = {}; for(const k in HEX) C[k] = hexRGB(HEX[k]);
+const SPLASH_BOXES = window.SPLASH_BOXES = {};   // per scene size: boxes the title-screen flag keeps clear of
 
 /* date palm, lit from the upper left (l light, p leaf, d dark leaf, o dates, t/T trunk) */
 const PALM = [
@@ -110,6 +111,7 @@ const CCOL = {L:'c3', l:'c2', M:'c1', D:'c0', k:'ck', r:'cr', y:'cy', g:'cg'};
 
 SCENES.splash = k => {
   const {R, W, H} = k, r = k.r, c = C;
+  const boxes = SPLASH_BOXES[W+'x'+H] = [];       // [x0, y0, x1, y1, soft?] of what the flag must not cover (soft: only if it can)
   const set = (x,y,col) => R.set(x,y,col);
   const hline = (x0,x1,y,col) => { for(let x=x0;x<=x1;x++) R.set(x,y,col); };
   const sprite = (G, map, x, yb, flip=false) => { const w = Math.max(...G.map(s => s.length));
@@ -132,6 +134,7 @@ SCENES.splash = k => {
   const sx = portrait ? Math.round(W*.16) : Math.max(sr + 2, fxL - Math.round(sr*.85));   // beside Al Faisaliah, not hidden behind it
   const sy = hy - Math.round(sr*.35);
   const glowR = sr + Math.max(5, Math.round(sr*.6));
+  boxes.push([sx - sr - 2, sy - sr - 2, sx + sr + 2, sy + sr, 1]);
   const gl = C.gl;
   for(let y=sy-glowR; y<=sy+glowR && y < hy+2; y++) for(let x=sx-glowR; x<=sx+glowR; x++){
     const d = Math.hypot(x-sx, y-sy); if(d > glowR || d <= sr) continue;
@@ -171,8 +174,9 @@ SCENES.splash = k => {
     L.tower(R, W*.37, hy, Math.max(5, kh*.075), kh*.5, GLASS, 'pif');
     L.tower(R, W*.44, hy, Math.max(4, kh*.06), kh*.26, GLASS, 'flat');
     L.tower(R, W*.94, hy, Math.max(4, kh*.06), kh*.24, FARG, 'step');
-    L.kingdom(R, kx, hy, kh, KC);
-    L.faisaliah(R, Math.round(W*.83), hy, Math.round(kh*.86), FS);
+    const kg = L.kingdom(R, kx, hy, kh, KC), fhP = Math.round(kh*.86), fxP = Math.round(W*.83);
+    L.faisaliah(R, fxP, hy, fhP, FS);
+    boxes.push([kx - kg.hb - 1, kTop, kx + kg.hb + 1, hy], [fxP - Math.ceil(fhP*.105) - 1, hy - fhP, fxP + Math.ceil(fhP*.105) + 1, hy]);
   } else {
     const kTop = Math.max(8, Math.round(H*.05)), kh = hy - kTop;
     const kx = Math.round(W - Math.max(26, Math.min(W*.1, 48))), hb = Math.round(kh*.145);
@@ -184,6 +188,7 @@ SCENES.splash = k => {
     L.kingdom(R, kx, hy, kh, KC);
     const fh = Math.round(Math.min(kh*.86, (hy - 36)/.76));
     L.faisaliah(R, fxL, hy, fh, FS);
+    boxes.push([kx - hb - 1, kTop, kx + hb + 1, hy], [fxL - Math.ceil(fh*.105) - 1, hy - fh, fxL + Math.ceil(fh*.105) + 1, hy]);
   }
 
   /* ---------- dunes: gentle windward slopes lit from the left, steeper slip faces in shade.
@@ -241,10 +246,11 @@ SCENES.splash = k => {
     dune(hy + 3 + Math.round(4*u), 4*u, .5, 1.2, DF);
     dune(Math.round(H*.42), 26*u, .8, 2.4, DM);
     dune(Math.round(H*.64), 30*u, .95, .3, DM);
-    const fg = dune(Math.round(H*.9), 30*u, 1.1, 4.1, DN);
-    palm(Math.round(W*.1), fg(Math.round(W*.1)) + 2, Math.round(H*.1), Math.round(W*.09));
-    palm(Math.round(W*.22), fg(Math.round(W*.22)) + 2, Math.round(H*.065), Math.round(W*.06), true);
-    const cx = Math.round(W*.5); sprite(CAMEL_L, CCOL, cx, fg(cx+20) + 1);
+    const fg = dune(Math.round(H*.94), 26*u, 1.1, 4.1, DN);
+    palm(Math.round(W*.08), fg(Math.round(W*.08)) + 2, Math.round(H*.1), Math.round(W*.09));
+    if(H >= 400){                                  // on short screens the credit line would sit on the camel
+      const cx = Math.round(W*.2), cb = fg(cx+20) + 1; sprite(CAMEL_L, CCOL, cx, cb);
+      boxes.push([cx, cb - CAMEL_L.length, cx + CAMEL_L[0].length, cb, 1]); }
     palm(sx + sr + 3, hy + 2, Math.round(hy*.14), 5);
   } else {
     dune(hy + 3 + Math.round(4*u), 5*u, .42, 1.2, DF);
@@ -254,10 +260,14 @@ SCENES.splash = k => {
     const px = Math.max(8, Math.round(W*.035));
     palm(px, fg(px) + 3, Math.round(56*u), Math.round(24*u));
     palm(px + Math.round(26*u), fg(px + Math.round(26*u)) + 3, Math.round(30*u), Math.round(15*u), true);
+    boxes.push([0, fg(px) + 3 - Math.round(64*u), px + Math.round(44*u), H, 1]);
     const cx = Math.round(W*.2), CM = u > .82 ? CAMEL_L : CAMEL;
-    sprite(CM, CCOL, cx, fg(cx + (CM[0].length>>1)) + 1);
+    if(H >= 230){                                  // on short wide screens the credit line sits where the camel would be
+      const cb = fg(cx + (CM[0].length>>1)) + 1; sprite(CM, CCOL, cx, cb);
+      boxes.push([cx, cb - CM.length, cx + CM[0].length, cb, 1]); }
     const px2 = Math.round(W*.94);
     palm(px2, fg(px2) + 3, Math.round(40*u), Math.round(20*u), true);
+    boxes.push([px2 - Math.round(24*u), fg(px2) + 3 - Math.round(48*u), W, H, 1]);
   }
 };
 })();

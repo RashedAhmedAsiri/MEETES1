@@ -232,7 +232,8 @@ function splash(){
   const bgH = AP.h, bgW = AP.w;
   const logoSize = NARROW ? 26 : 32;
   const adult = (id, label) => `<button class="pbtn sand" id="${id}" aria-label="${label}">${TX.small(label, '#1b1e2b')}</button>`;
-  show(`<section class="screen splash">
+  const land = !(AP.h > AP.w*1.15);               // same test as the title scene's own layout
+  show(`<section class="screen splash ${land ? 'land' : ''} ${land && AP.h < 230 ? 'short' : ''}">
     <div class="bg">${sceneTag('splash', bgW, bgH)}</div>
     <div class="corner">${adult('toParent', 'ولي الأمر')}${adult('toTeacher', 'المعلمة')}</div>
     <div class="fore">
@@ -241,12 +242,76 @@ function splash(){
       <div class="pan tagp">${T('نتعلم وطننا… ونبني مستقبلنا',{size:13, color:'#0e6b3a', maxW:AP.w - 30})}</div>
       <div class="who">${bubble(NARROW?110:120, VOICE.welcome)}<div id="bw">${B_('wave')}</div></div>
       <div class="row center btns">${btn({id:'go', cls:'green big', label:'ابدأ المغامرة', icon:'i_play'})}${p ? btn({id:'cont', cls:'big', label:'متابعة '+p.name}) : ''}</div>
+      <div class="credit">${T(CREDIT, {size:11, color:'#4a2e1c'})}</div>
     </div>
   </section>`, {fn:splash, safe:true});
+  placeFlag(land);
   $('#go').onclick = () => { sfx.tap(); Music.start(); say('welcome'); profiles.length ? whoPlays() : charSelect(true); };
   if(p) $('#cont').onclick = () => { sfx.tap(); Music.start(); enterMap(); };
   $('#toTeacher').onclick = () => { sfx.tap(); teacher(); };
   $('#toParent').onclick = () => { sfx.tap(); parentGate(); };
+}
+/* the flag goes in the biggest open patch of the title screen: nothing of the title, the
+   mascot, the buttons or the corner buttons may cover the cloth, and it stays off Kingdom
+   Centre, Al Faisaliah, the sun and the camel (the scene records where they are). Higher and
+   more central patches win ties, so on wide screens it flies in the sky above the title. */
+function placeFlag(land){
+  const bg = $('.splash .bg'); if(!bg) return;
+  const W = AP.w, H = AP.h, ox = (innerWidth - W*SC)/2, oy = innerHeight - H*SC, hy = land ? Math.round(H*.62) : Math.round(H*.2);
+  const rects = [];
+  for(const el of $$('.splash .logo .px, .splash .tagp, .splash .bubble, .splash #bw, .splash .btns .pbtn, .splash .credit .px, .splash .corner')){
+    const r = el.getBoundingClientRect(); if(!r.width) continue;
+    rects.push([(r.left-ox)/SC - 3, (r.top-oy)/SC - 3, (r.right-ox)/SC + 3, (r.bottom-oy)/SC + 3]); }
+  const scene = (window.SPLASH_BOXES || {})[W+'x'+H] || [];
+  const find = soft => {                     // soft: also keep clear of the sun, the camel and the palms
+  const rs = rects.concat(scene.filter(b => soft || !b[4]).map(b => [b[0]-2, b[1]-2, b[2]+2, b[3]+2]));
+  // occupancy on a 2-pixel grid, then a summed-area table to test any box at once
+  const G = 2, cols = Math.ceil(W/G), rows = Math.ceil(H/G), sat = new Int32Array((cols+1)*(rows+1));
+  const busy = (c, r) => { const x0 = c*G, y0 = r*G, x1 = x0 + G, y1 = y0 + G;
+    if(x0 < 3 || x1 > W - 3 || y0 < 2 || y1 > H - 2) return 1;
+    for(const q of rs) if(x1 > q[0] && x0 < q[2] && y1 > q[1] && y0 < q[3]) return 1;
+    return 0; };
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) sat[(r+1)*(cols+1)+c+1] = busy(c,r) + sat[r*(cols+1)+c+1] + sat[(r+1)*(cols+1)+c] - sat[r*(cols+1)+c];
+  const free = (c, r, w, h) => c + w <= cols && r + h <= rows && !(sat[(r+h)*(cols+1)+c+w] - sat[r*(cols+1)+c+w] - sat[(r+h)*(cols+1)+c] + sat[r*(cols+1)+c]);
+  let best = null;
+  for(let fh = Math.min(80, H*.3); fh >= 28 && !best; fh -= 2){
+    const fw = Math.round(fh*1.5), amp = Math.max(1, Math.round(fh*.045)), top = 3 + amp;
+    const bw = Math.ceil((fw + 2)/G), bh = Math.ceil((fh + 2*amp + 4)/G);       // pole, finial, wave
+    for(let r=0; r+bh<=rows; r++) for(let c=0; c+bw<=cols; c++){
+      const y = r*G; if(y + top + fh + amp > hy - 2 && y + top < hy + 6) continue;   // all in the sky, or all over the sand
+      if(!free(c, r, bw, bh)) continue;
+      const score = y + Math.abs(c*G + (fw + 2)/2 - W/2)*.25;
+      if(!best || score < best.score) best = {score, fh, fw, x:c*G, y};
+    }
+  }
+  return best;
+  };
+  const best = find(true) || find(false);
+  const k = Math.max(1, Math.round(SC*(window.devicePixelRatio || 1)));
+  if(NARROW && (!best || best.fh < 40)){
+    // a short phone screen has no open patch big enough: the flag takes the greeting bubble's place
+    // beside Barem (who still says the greeting)
+    $('.splash').classList.add('compact');
+    const el = document.createElement('img');
+    el.className = 'px flaginline'; el.alt = 'علم المملكة العربية السعودية'; el.draggable = false;
+    const put = fh => { const fw = Math.round(fh*1.5), top = 3 + Math.max(1, Math.round(fh*.045)), artH = top + fh + top + 12;
+      const img = cacheCanvas(`flag:${fw}x${fh}:${k}:${artH}`, () => flagCanvas(fw, fh, artH, k).canvas);
+      el.src = img.url; el.style.cssText = `--w:${fw + 2};--h:${img.h / k}`; };
+    let fh = Math.round(Math.min(90, W - 84)/1.5); put(fh);
+    $('.splash .who').insertBefore(el, $('#bw'));
+    const over = Math.ceil(2 - ($('.splash .fore').getBoundingClientRect().top - oy)/SC);   // still too tall: shrink the flag to fit
+    if(over > 0 && fh - over >= 30) put(fh - over);
+    return;
+  }
+  if(!best) return;
+  const {fh, fw} = best, top = 3 + Math.max(1, Math.round(fh*.045));
+  const poleBottom = best.y + top + fh < hy ? hy : H;                                  // down to the city, or into the dunes
+  const artH = poleBottom - best.y;
+  const img = cacheCanvas(`flag:${fw}x${fh}:${k}:${artH}`, () => flagCanvas(fw, fh, artH, k).canvas);
+  const el = document.createElement('img');
+  el.className = 'px flagimg'; el.alt = 'علم المملكة العربية السعودية'; el.draggable = false; el.src = img.url;
+  el.style.cssText = `--w:${fw + 2};--h:${img.h / k};left:${ox + best.x*SC}px;top:${oy + best.y*SC}px`;
+  bg.appendChild(el);
 }
 function enterMap(){ const p = P(); mapScreen(); say('hello', {name:p.name}, {alt:'helloHero'}); say('whereToday', {}, {queue:true}); }
 
@@ -857,6 +922,7 @@ function medalScreen(){
     <div class="row center" style="align-items:flex-end">${B_('medal')}${genTag('medal', medalCanvas)}${S_(p.avatar)}</div>
     <div class="pan row center">${S_('i_medal')}${TX.label('وسام برعم الوطن')}${TX.label(p.name,'#0e6b3a')}${S_('i_star')}${TX.label(num(p.stars))}</div>
     <div class="row center">${btn({cls:'green big', label:'الخريطة', icon:'i_map', attrs:'data-nav="map"'})}${btn({cls:'big', label:'جوازي', icon:'i_book', attrs:'data-nav="passport"'})}</div>
+    ${TX.small(CREDIT, '#4a2e1c')}
     <div id="bubble" hidden data-w="100"></div>
   </section>`, {fn:medalScreen, safe:true});
   confetti(90); sfx.win(); say('medal');
@@ -872,5 +938,5 @@ function boot(){
   const h = location.hash.replace('#','');
   if(h === 'teacher') teacher(); else if(h === 'parent') parentGate(); else splash();
 }
-const fontsReady = document.fonts && document.fonts.load ? Promise.race([Promise.all([document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'بطل'), document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'Ab1')]), new Promise(r=>setTimeout(r,2500))]) : Promise.resolve();
+const fontsReady = document.fonts && document.fonts.load ? Promise.race([Promise.all([document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'بطل'), document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'Ab1'), document.fonts.load('700 20px Amiri', SHAHADA)]), new Promise(r=>setTimeout(r,2500))]) : Promise.resolve();
 fontsReady.then(boot, boot);
