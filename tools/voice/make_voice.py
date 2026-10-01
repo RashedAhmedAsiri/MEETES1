@@ -5,13 +5,16 @@ Saudi voice (edge-tts) and writes game/js/voice-files.js, which maps each line t
     pip install edge-tts
     python3 tools/voice/make_voice.py            # records only the lines that have no clip yet
     python3 tools/voice/make_voice.py --all      # records everything again
+    python3 tools/voice/make_voice.py --trim-all # only trims the silence off the clips already there
 
 The line list comes from tools/voice/lines.js (Node). Clips are saved as game/voice/<hash>.mp3,
 named after the line itself, so editing a line in content.js records just that line again and
 clips no longer used are deleted. Needs network access to speech.platform.bing.com.
 Behind a TLS-inspecting proxy, set EDGE_TTS_CA to the proxy's CA bundle file.
+Edge pads short lines to about two seconds; each new clip is trimmed to its speech plus a short
+tail with ffmpeg (from PATH, or the one in the imageio-ffmpeg package), so counting keeps pace.
 """
-import asyncio, hashlib, json, os, ssl, subprocess, sys
+import asyncio, hashlib, json, os, shutil, ssl, subprocess, sys
 import edge_tts
 import edge_tts.communicate as ec
 
@@ -24,6 +27,27 @@ OUT = os.path.join(GAME, 'voice')
 if os.environ.get('EDGE_TTS_CA'):
     ec._SSL_CTX = ssl.create_default_context(cafile=os.environ['EDGE_TTS_CA'])
 
+def ffmpeg():
+    exe = shutil.which('ffmpeg')
+    if exe:
+        return exe
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except ImportError:
+        return None
+
+def trim(path):
+    """Cut the silence before and after the speech, keep a 0.12 s tail."""
+    exe = ffmpeg()
+    if not exe:
+        return
+    cut = 'silenceremove=start_periods=1:start_threshold=-45dB'
+    subprocess.run([exe, '-hide_banner', '-loglevel', 'error', '-y', '-i', path,
+                    '-af', f'{cut},areverse,{cut},areverse,apad=pad_dur=0.12',
+                    '-c:a', 'libmp3lame', '-b:a', '48k', '-ac', '1', '-ar', '24000', path + '.trim.mp3'], check=True)
+    os.replace(path + '.trim.mp3', path)
+
 def clip_name(text):
     return hashlib.sha1(text.encode('utf-8')).hexdigest()[:12] + '.mp3'
 
@@ -34,6 +58,7 @@ async def record(text, path, sem):
                 await edge_tts.Communicate(text, VOICE, rate=RATE).save(path + '.part')
                 if os.path.getsize(path + '.part') < 800:
                     raise RuntimeError('empty clip')
+                trim(path + '.part')
                 os.replace(path + '.part', path)
                 print('ok  ', text)
                 return True
@@ -46,6 +71,12 @@ async def record(text, path, sem):
 async def main():
     lines = json.loads(subprocess.check_output(['node', os.path.join(HERE, 'lines.js')]).decode('utf-8'))
     os.makedirs(OUT, exist_ok=True)
+    if '--trim-all' in sys.argv:
+        for f in sorted(os.listdir(OUT)):
+            if f.endswith('.mp3'):
+                trim(os.path.join(OUT, f))
+        print('trimmed', len(os.listdir(OUT)), 'clips')
+        return 0
     redo = '--all' in sys.argv
     todo = [t for t in lines if redo or not os.path.exists(os.path.join(OUT, clip_name(t)))]
     sem = asyncio.Semaphore(4)
