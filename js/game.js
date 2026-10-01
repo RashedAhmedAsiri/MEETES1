@@ -275,7 +275,7 @@ function placeFlag(land){
   const free = (c, r, w, h) => c + w <= cols && r + h <= rows && !(sat[(r+h)*(cols+1)+c+w] - sat[r*(cols+1)+c+w] - sat[(r+h)*(cols+1)+c] + sat[r*(cols+1)+c]);
   let best = null;
   for(let fh = Math.min(80, H*.3); fh >= 28 && !best; fh -= 2){
-    const fw = Math.round(fh*1.5), amp = Math.max(1, Math.round(fh*.045)), top = 3 + amp;
+    const fw = Math.round(fh*1.5), amp = Math.max(1, Math.round(fh*.035)), top = 3 + amp;
     const bw = Math.ceil((fw + 2)/G), bh = Math.ceil((fh + 2*amp + 4)/G);       // pole, finial, wave
     for(let r=0; r+bh<=rows; r++) for(let c=0; c+bw<=cols; c++){
       const y = r*G; if(y + top + fh + amp > hy - 2 && y + top < hy + 6) continue;   // all in the sky, or all over the sand
@@ -294,7 +294,7 @@ function placeFlag(land){
     $('.splash').classList.add('compact');
     const el = document.createElement('img');
     el.className = 'px flaginline'; el.alt = 'علم المملكة العربية السعودية'; el.draggable = false;
-    const put = fh => { const fw = Math.round(fh*1.5), top = 3 + Math.max(1, Math.round(fh*.045)), artH = top + fh + top + 12;
+    const put = fh => { const fw = Math.round(fh*1.5), top = 3 + Math.max(1, Math.round(fh*.035)), artH = top + fh + top + 12;
       const img = cacheCanvas(`flag:${fw}x${fh}:${k}:${artH}`, () => flagCanvas(fw, fh, artH, k).canvas);
       el.src = img.url; el.style.cssText = `--w:${fw + 2};--h:${img.h / k}`; };
     let fh = Math.round(Math.min(90, W - 84)/1.5); put(fh);
@@ -304,7 +304,7 @@ function placeFlag(land){
     return;
   }
   if(!best) return;
-  const {fh, fw} = best, top = 3 + Math.max(1, Math.round(fh*.045));
+  const {fh, fw} = best, top = 3 + Math.max(1, Math.round(fh*.035));
   const poleBottom = best.y + top + fh < hy ? hy : H;                                  // down to the city, or into the dunes
   const artH = poleBottom - best.y;
   const img = cacheCanvas(`flag:${fw}x${fh}:${k}:${artH}`, () => flagCanvas(fw, fh, artH, k).canvas);
@@ -938,5 +938,5 @@ function boot(){
   const h = location.hash.replace('#','');
   if(h === 'teacher') teacher(); else if(h === 'parent') parentGate(); else splash();
 }
-const fontsReady = document.fonts && document.fonts.load ? Promise.race([Promise.all([document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'بطل'), document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'Ab1'), document.fonts.load('700 20px Amiri', SHAHADA)]), new Promise(r=>setTimeout(r,2500))]) : Promise.resolve();
+const fontsReady = document.fonts && document.fonts.load ? Promise.race([Promise.all([document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'بطل'), document.fonts.load('800 14px "Baloo Bhaijaan 2"', 'Ab1'), document.fonts.load('700 20px Amiri', SHAHADA), FLAG_SA.decode ? FLAG_SA.decode().catch(()=>{}) : null]), new Promise(r=>setTimeout(r,2500))]) : Promise.resolve();
 fontsReady.then(boot, boot);

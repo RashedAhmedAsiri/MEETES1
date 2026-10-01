@@ -1254,10 +1254,18 @@ function medalCanvas(){
    As on the flag: green field, the Shahada in white, and under it a white sword whose hilt is on
    the fly side and whose point faces the hoist. */
 const SHAHADA = 'لا إله إلا الله محمد رسول الله';
+/* The flag itself (Shahada in thuluth and the sword) is the vector drawing from country-flag-icons
+   (https://gitlab.com/catamphetamine/country-flag-icons), (c) 2020 @catamphetamine, MIT License,
+   recoloured to the official green #006C35. */
+const FLAG_SA = new Image();
+FLAG_SA.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 513 342"><path d="M0 0h513v342H0z" fill="#fff"/><g fill="#006c35"><path d="M0 0v342h513V0zm218 76q1 2-2 5-3 2-1 4 3 4 0 6-2 1-5-1-6-6 0-14 6-4 8 0m-102 2 1 6q0 4-2 4-5 1-5-6l2-4zm39 1 1 2q-1 4-5 4-5 0-6-4c0-4 7-6 10-2m47 2q3 4 2 9c-1 2-22 19-24 19q-3 0-4-4l6-6 6-5v-3c-5-10 7-18 14-10m35-3q3 1 0 7-2 8-6 6c-3-1-3 14 0 19q2 4 7-1c2-3 2-5 2-15 0-12 0-13 2-13q5-2 5 13 1 11 3 13 3 6 6 3 3-2-1-12-3-12 1-16h9q2-2 9 1l6 2 1-2q4-4 6-1l3 17c3 16 3 16 7 24l15 30q1 6-4 5l-8-14-6-12 1 20c1 21 1 23-4 23q-4 2-4-15l-1-27-1-16-9-13c-8-12-8-13-11-13q-6-1-2 6l2 7q0 4 3 2 6-2 6 3-1 4-8 5l-5 2-5 2q-6 0-10-3-2-3-5 1-5 5-12 2-5-1-7-10l-1-3-1 3q-3 7-9 8-7 0-9-11-3-10 2-10 4-1 5 7l2 6q1 0 4-7 6-17 13-12h1c-1-1 2-10 4-11zm-97 10 2 16 1 9h4q5 2 6-1c2-1 2-2-1-11l-3-12 3-1 11 5V82q4-2 6 1l3 23 1 20h2q5 0 5 5 1 6 3 0 3-9 8-2 1 3 2 0 3-7 4-6c5 0 6 7 1 13q-3 3-7 3l-6 1q-5 4-10 0l-2-2v5c0 21-16 42-33 42q-21-1-23-21 0-5 2-6 4-1 6 6 1 12 12 13 14 2 24-15 6-11 1-5-12 18-28 11-7-5-9-17-2-6 1-7 5-3 6 6 1 12 10 12 7 0 13-8 5-8-1-7-11-1-8-12 8-11 17-5l3 2-1-12-4-22q-3 1 0 7c2 6 2 6 0 10l-5 5q-3 3-7 1h-5l-1 16c-1 19-1 20-4 21-4 1-4-2-4-19l1-15-3 1q-3 1-6-2c-2-2-2-2-3-14l-1-12q-2-1-2 10l-1 13q-3 6-8 4c-3-2-4-4-7-15q-4-15 2-14 4-1 5 8l1 5 1-6q0-13 9-12l6 2c2 3 2 4 2 14l1 11 2-1 1-8-2-16q-3-12 2-11 3-1 5 7m163-3q4 10 1 13-4 3-7-7-3-11 2-10zm12-3 3 7q2 6 1 8v16l2 27c2 22 2 21 6 21h3l-1-5-2-23-3-33c-2-16-1-19 3-19 3 0 8 14 6 16v24c5 47 5 48 0 47q-3-2-1 4l2 6q2 1 5-9 7-18 10-16 3 0 7 5 4 7 7 7 4-1 1-33l-1-21-10-12-9-15q0-5 8-1 5 2 6 6l2 6q3 4 1-4 0-10 3-10c4 0 9 10 7 13l-1 8q1 8 4 12l3 3-2-15c-2-16-2-19 1-20q3 0 5 4l4 5h2q6-4 8 9 0 8-4 8-3 0-4-6 1-8-3-5c-1 2-1 3 1 19l2 17 5 7c6 10 12 21 11 22q-2 3-5 2l-5-8-5-8 1 8c0 11 0 11-3 11q-5 3-5-7l-1-16c0-8-1-10-4-15l-4-5v19c1 21 0 25-5 28q-6 5-13-3l-4-5-4 9q-6 14-11 15-9-1-11-16-1-8-5-1c-3 5-12 13-19 17q-8 4-8-2-1-2 6-6c9-5 17-14 17-18l-5-78q2-4 5-1m89 5 4 6q1 1-2 3l-2 2 4 24q4 25 4 35c0 10 0 11-3 17q-7 13-19 14-8 0-7-2-2-4 7-6 15-2 14-23a708 708 0 0 0-8-75c3-2 3-1 8 5m-211 19 1 4q0 3 2 2 5 0 5 4c0 4-9 6-13 2-4-5 0-17 5-12m108 1h2l4-1q4 2 0 7-7 6-11-1v-5q3-2 5 0m55 2q3 4-1 6-2 0-1 5t-1 6q-1 2-10-6-8-7-6-9 3-4 7 0l2 2 2-3q5-3 8-1m-131 13c3 2 6 14 6 17q-1 6 6 1l10-4q5-1 7-4 4-9 10-12 10 0 11 9 0 7-16 13l-2 1 13 1c16 0 16 0 13 9q-2 7-4 7l-10 2q-19 3-17 9 1 2 4 3 6 3 3 7l-7 1q-13-2-21-10l-3-3-2 3q-7 10-19 13-10 2-15-10l-5 2q-18 10-19 8l-2-3c0-2 1-2 15-11l9-6q1-3 5-4c3 1 10-5 12-9q3-6-1-15l-2-8q1-5 6-6c3 0 8 5 8 7q-1 4-4 3v1l1 10c1 9-1 13-10 21l-7 6 2 3q5 9 15-2 10-8 10-23 0-10-6-24v-4q3-4 6 1m17 2q2 3 4 0 11-3 5 5c-4 5-12 5-15-1v-4zm118 5 1 2q1 2-7 8c-8 6-9 7-11 5q-5-4 6-10c8-6 8-6 11-5m-229 3q3 2-10 10-12 8-13 3-5-3 9-10 13-8 14-3m229 10c3 2 4 9 3 11q-3 3-6 1c-2-2-3-11-1-13q1-2 4 1m-172 7q3 3 2 7 1 5-3 5-3 1-3-3l-2-4q-3-3-1-6 4-2 7 1m-79 9 1 8q0 9 3 6 4-1 4 3-1 7-7 7-7-1-7-14-1-9 2-10zm168 12q0 4 3 2t4 3q-2 6-8 8l-4-2q-3-3-4-2-4 0-5-4l5-6q7-6 7-4 3 1 2 5m102 3q4 4 1 9-7 7-7-4t6-5m-42 73c0 2 1 2 12 2q24-1 22 11 0 7-6 10c-4 1-31 2-34 0q-2-1-2-6v-4h-82l-74-1c-16 0-28-10-28-10h92c91 0 92-1 92-2q-1-3 4-5c5-2 4 4 4 5"/><path d="m195 86 1 1 1-1-1-1q-2 0-1 1m84 5q-2 2 1 5l3 3-1-4-1-5zm-125 45q-3 3-1 4 5-1 6-4zm110-7q-4 5 0 3 6-4 2-4zm-31 30q0 6 4 8l5 4q3 2 2-3 0-3 4-7 4-3 2-4l-13-3h-5zm104 101q-1 3 13 2c11 0 13 0 14-2l-13-1z"/></g></svg>`);
 function flagCanvas(fw, fh, poleBottom, k){
-  const amp = Math.max(1, Math.round(fh*.045)), y0 = 3 + amp, artW = fw + 2, artH = Math.max(y0 + fh + amp + 1, poleBottom);
-  // the flat cloth
+  const amp = Math.max(1, Math.round(fh*.035)), y0 = 3 + amp, artW = fw + 2, artH = Math.max(y0 + fh + amp + 1, poleBottom);
+  // the flat cloth: the real flag drawing when it has loaded (and the browser lets it be read back)
   const F = document.createElement('canvas'); F.width = fw*k; F.height = fh*k; const f = F.getContext('2d');
+  let drawn = false;
+  if(FLAG_SA.complete && FLAG_SA.naturalWidth){ try{ f.drawImage(FLAG_SA, 0, 0, F.width, F.height); f.getImageData(0, 0, 1, 1); drawn = true; }catch(e){ f.clearRect(0, 0, F.width, F.height); } }
+  if(!drawn){
   f.fillStyle = '#006c35'; f.fillRect(0, 0, F.width, F.height);
   f.fillStyle = '#ffffff'; f.direction = 'rtl'; f.textAlign = 'center'; f.textBaseline = 'alphabetic';
   f.font = `700 100px Amiri, "Baloo Bhaijaan 2", serif`;
@@ -1275,14 +1283,14 @@ function flagCanvas(fw, fh, poleBottom, k){
     f.fillRect(guard + W*.012, yb - t*.6, grip - guard - W*.012, t*1.2);                 // grip
     f.beginPath(); f.moveTo(grip, yb - t*.6); f.lineTo(grip + t*1.6, yb + t*1.6); f.lineTo(grip + t*.4, yb + t*1.9); f.lineTo(grip - t*.2, yb + t*.6); f.closePath(); f.fill();   // pommel curling down
   }
+  }
   // the waving cloth: each art column shifted up or down, and lit or shaded by its slope
   const C = document.createElement('canvas'); C.width = artW*k; C.height = artH*k; const c = C.getContext('2d');
   const lam = fw*.85, ph = .6, dy = i => Math.round(amp*Math.sin(2*Math.PI*i/lam - ph)*Math.min(1, i/(fw*.2)));
   for(let i=0;i<fw;i++) c.drawImage(F, i*k, 0, k, F.height, (2+i)*k, (y0 + dy(i))*k, k, F.height);
   c.globalCompositeOperation = 'source-atop';
   for(let i=0;i<fw;i++){ const s = Math.cos(2*Math.PI*i/lam - ph)*Math.min(1, i/(fw*.2));
-    if(s > .45){ c.fillStyle = 'rgba(255,255,255,.13)'; c.fillRect((2+i)*k, 0, k, C.height); }
-    else if(s < -.45){ c.fillStyle = 'rgba(0,0,0,.2)'; c.fillRect((2+i)*k, 0, k, C.height); } }
+    c.fillStyle = s > 0 ? `rgba(255,255,255,${(s*.1).toFixed(3)})` : `rgba(0,0,0,${(-s*.16).toFixed(3)})`; c.fillRect((2+i)*k, 0, k, C.height); }
   c.globalCompositeOperation = 'source-over';
   // pole and gold finial
   c.fillStyle = '#f2f2ee'; c.fillRect(0, 2*k, k, (artH-2)*k); c.fillStyle = '#9aa3a8'; c.fillRect(k, 2*k, k, (artH-2)*k);
