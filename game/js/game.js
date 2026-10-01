@@ -78,7 +78,7 @@ function pickVoice(){ try{
   arNatural = nat.includes(arVoice); }catch(e){} }
 if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function line(id, vars={}){ let t = VOICE[id] ?? id; if(Array.isArray(t)) t = pick(t); return t.replace(/\{(\w+)\}/g, (_,k) => vars[k] ?? ''); }
-const CLIPS = typeof VOICE_CLIPS === 'object' ? VOICE_CLIPS : {};
+const CLIPS = typeof VOICE_CLIPS === 'object' ? VOICE_CLIPS : {}, CLIP_COUNT = Object.keys(CLIPS).length;
 const VQ = {list:[], cur:null, el:null};   /* waiting lines, the line playing now, the one shared <audio> */
 function stopVoice(){
   VQ.list.length = 0; if(VQ.cur) clearTimeout(VQ.cur.timer); VQ.cur = null;
@@ -97,7 +97,7 @@ function nextVoice(){
   const done = () => { if(!live()) return; clearTimeout(me.timer); VQ.cur = null; nextVoice(); };
   const synth = () => { if(!live() || me.synth) return; me.synth = true; clearTimeout(me.timer); if(VQ.el) try{ VQ.el.pause(); }catch(e){} synthSay(t, me, live, done); };
   const src = CLIPS[t];
-  if(!src) return synth();
+  if(!src){ if(CLIP_COUNT) console.debug('no voice clip, using the browser voice:', t); return synth(); }
   try{
     const a = VQ.el ||= new Audio(); a.pause();
     a.onended = () => !me.synth && done(); a.onerror = synth;
@@ -125,7 +125,9 @@ function setBubble(text){ const b = $('#bubble'); if(!b) return; b.dataset.t = t
 function say(id, vars={}, opts={}){
   const text = line(id, vars); const b = $('#bubble');
   if(b) setBubble(opts.append && b.dataset.t ? b.dataset.t + ' ' + text : text);
-  speakRaw(text, !!opts.queue); return text;
+  let spoken = text;
+  if(opts.alt && !CLIPS[voiceKey(text)]){ const alt = line(opts.alt, vars); if(CLIPS[voiceKey(alt)]) spoken = alt; }
+  speakRaw(spoken, !!opts.queue); return text;
 }
 function mood(state){ const w = $('#bw'); if(w) w.innerHTML = B_(state); }
 
@@ -246,7 +248,7 @@ function splash(){
   $('#toTeacher').onclick = () => { sfx.tap(); teacher(); };
   $('#toParent').onclick = () => { sfx.tap(); parentGate(); };
 }
-function enterMap(){ const p = P(); mapScreen(); say('hello', {name:p.name}); say('whereToday', {}, {queue:true}); }
+function enterMap(){ const p = P(); mapScreen(); say('hello', {name:p.name}, {alt:'helloHero'}); say('whereToday', {}, {queue:true}); }
 
 /* ---- 2a. who is playing (shared classroom tablet) */
 function whoPlays(){
@@ -364,7 +366,7 @@ function stationHub(id){
           <div class="back">${compact ? btn({cls:'sand ibtn', icon:'i_map', aria:'الخريطة', attrs:'data-nav="map" title="الخريطة"'})
                                      : btn({cls:'sand', label:'الخريطة', icon:'i_map', attrs:'data-nav="map"'})}</div></div>
         <div class="sceneframe" style="width:calc(var(--u)*${sw});height:calc(var(--u)*${sh})">${sceneTag(id, sw, sh)}</div></div>
-      <div class="acts-list">
+      <div class="acts-list ${s.acts.length >= 4 ? 'many' : ''}">
         <div class="guide-row"><div id="bw">${B_('happy')}</div>${bubble(NARROW ? Math.min(150, AP.w - 70) : sideW - 50)}</div>
         ${s.acts.map((a,i) => { const inf = ACT_INFO[a.type]; const ic = inf.iconFor ? inf.iconFor(a) : inf.icon;
           return `<button class="pbtn act-tile ${i===nextIdx?'next':''}" data-i="${i}">${S_(ic)}<span class="meta">${TX.label(inf.title(a))}</span><span class="st" style="opacity:${rec.acts[i]?1:.25}">${S_('i_star')}</span></button>`; }).join('')}
@@ -377,7 +379,7 @@ function stationHub(id){
 }
 function startAct(stId, i){
   const a = stationById(stId).acts[i];
-  ({letter:letterAct, count:countAct, beach:beachAct, order:orderAct, path:pathAct, pairs:pairsAct, size:sizeAct, shapes:shapesAct, hunt:huntAct, classify:classifyAct, numqty:numQtyAct})[a.type](stId, i, a);
+  ({letter:letterAct, write:writeAct, count:countAct, beach:beachAct, order:orderAct, path:pathAct, pairs:pairsAct, size:sizeAct, shapes:shapesAct, hunt:huntAct, classify:classifyAct, numqty:numQtyAct})[a.type](stId, i, a);
 }
 function completeAct(stId, i, fromEl){
   const p = P(); const rec = stRec(stId); rec.acts[i] = true; p.stars++; save();
@@ -479,31 +481,14 @@ function letterAct(stId, idx, a){
     });
   }
   function trace(){
-    play().innerHTML = `${TX.label('مرّر إصبعك فوق الحرف','#6b6450')}<div class="tracewrap"><canvas id="tc" width="80" height="80" aria-label="لوح الكتابة"></canvas></div>${btn({id:'clr', label:'امسح وحاول'})}`;
+    const t0 = Date.now();
+    const board = traceBoard(L, () => { sfx.ok(); mood('cheer'); say('traceDone');
+      logAttempt({station:stId, act:'letter', skill:'trace', item:L, level:4, errors:0, firstTry:true, ms:Date.now()-t0}); stepDone(1700); },
+      () => { mood('help'); say('traceMore'); });
+    play().innerHTML = `${TX.label('مرّر إصبعك فوق الحرف','#6b6450')}${board.html}${btn({id:'clr', label:'امسح وحاول'})}`;
+    const b = board.mount(); $('#clr').onclick = () => { sfx.tap(); b.clear(); };
     const intro = () => { mood('happy'); say('letterTrace', {l:L}); };
     intro(); onReplay(intro);
-    const t0 = Date.now(); const N = 80; const cv = $('#tc'); const ctx = cv.getContext('2d');
-    const glyph = textCanvas(L, {size:50, color:'#000000'}); const gd = glyph.getContext('2d').getImageData(0,0,glyph.width,glyph.height).data;
-    const gx = Math.floor((N - glyph.width)/2), gy = Math.floor((N - glyph.height)/2) - 2;
-    const target = new Uint8Array(N*N); const pts = [];
-    for(let y=0;y<glyph.height;y++) for(let x=0;x<glyph.width;x++) if(gd[(y*glyph.width+x)*4+3] > 0){ const X = x+gx, Y = y+gy; if(X>=0&&Y>=0&&X<N&&Y<N){ target[Y*N+X] = 1; pts.push(Y*N+X); } }
-    const ink = new Uint8Array(N*N);
-    const paint = () => { ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,N,N);
-      for(let i=0;i<N*N;i++){ const x = i%N, y = (i/N)|0;
-        if(ink[i]){ ctx.fillStyle = target[i] ? '#0e6b3a' : '#5cbf60'; ctx.fillRect(x,y,1,1); continue; }
-        if(target[i]){ const edge = !target[i-1] || !target[i+1] || !target[i-N] || !target[i+N]; ctx.fillStyle = edge ? (((x+y)&1) ? '#5cbf60' : '#e3f4e2') : '#e3f4e2'; ctx.fillRect(x,y,1,1); } } };
-    paint();
-    let drawing = false, last = null, lifts = 0, finished = false;
-    const pos = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX-r.left)/r.width*N), Math.floor((e.clientY-r.top)/r.height*N)]; };
-    const dab = (x,y) => { for(let j=-3;j<=3;j++) for(let i=-3;i<=3;i++) if(i*i+j*j<=10){ const X=x+i, Y=y+j; if(X>=0&&Y>=0&&X<N&&Y<N) ink[Y*N+X] = 1; } };
-    const lineTo = (a,b) => { const n = Math.max(Math.abs(b[0]-a[0]), Math.abs(b[1]-a[1]), 1); for(let k=0;k<=n;k++) dab(Math.round(a[0]+(b[0]-a[0])*k/n), Math.round(a[1]+(b[1]-a[1])*k/n)); };
-    cv.onpointerdown = e => { if(finished) return; drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); dab(...last); paint(); };
-    cv.onpointermove = e => { if(!drawing) return; const q = pos(e); lineTo(last, q); last = q; paint(); };
-    cv.onpointerup = cv.onpointercancel = () => { if(!drawing) return; drawing = false; lifts++;
-      const hit = pts.filter(i=>ink[i]).length; const cov = pts.length ? hit/pts.length : 1;
-      if(cov >= .6 || (lifts >= 5 && cov >= .35)){ finished = true; sfx.ok(); mood('cheer'); say('traceDone');
-        logAttempt({station:stId, act:'letter', skill:'trace', item:L, level:4, errors:0, firstTry:true, ms:Date.now()-t0}); stepDone(1700); } };
-    $('#clr').onclick = () => { ink.fill(0); lifts = 0; paint(); };
   }
   function finish(){
     const clean = !usedSupport && totalErr <= 1;
@@ -512,6 +497,66 @@ function letterAct(stId, idx, a){
     mood('celebrate'); say('actDone'); completeAct(stId, idx, play());
   }
   next();
+}
+
+/* ---- finger-writing board: the letter drawn faint on a white board; ink that covers enough of
+   it counts as written. Used by the letter activity's trace step and by the write activity. */
+function traceBoard(text, onDone, onMore){
+  const glyph = textCanvas(text, {size:62, color:'#000000'}), gd = glyph.getContext('2d').getImageData(0,0,glyph.width,glyph.height).data;
+  let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;                      // the ink's own box, so the letter sits centred
+  for(let y=0;y<glyph.height;y++) for(let x=0;x<glyph.width;x++) if(gd[(y*glyph.width+x)*4+3] > 0){ x0 = Math.min(x0,x); x1 = Math.max(x1,x); y0 = Math.min(y0,y); y1 = Math.max(y1,y); }
+  if(x1 < 0){ x0 = y0 = 0; x1 = glyph.width - 1; y1 = glyph.height - 1; }
+  const NW = Math.max(84, x1 - x0 + 25), NH = Math.max(84, y1 - y0 + 21);
+  return {
+    html:`<div class="tracewrap"><canvas id="tc" width="${NW}" height="${NH}" style="width:calc(var(--u)*${NW});height:calc(var(--u)*${NH})" aria-label="لوح الكتابة"></canvas></div>`,
+    mount(){
+      const cv = $('#tc'), ctx = cv.getContext('2d');
+      const gx = Math.floor((NW - (x1 - x0 + 1))/2) - x0, gy = Math.floor((NH - (y1 - y0 + 1))/2) - y0;
+      const target = new Uint8Array(NW*NH), ink = new Uint8Array(NW*NH), pts = [];
+      for(let y=0;y<glyph.height;y++) for(let x=0;x<glyph.width;x++) if(gd[(y*glyph.width+x)*4+3] > 0){ const X = x+gx, Y = y+gy; if(X>=0&&Y>=0&&X<NW&&Y<NH){ target[Y*NW+X] = 1; pts.push(Y*NW+X); } }
+      const paint = () => { ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,NW,NH);
+        for(let i=0;i<NW*NH;i++){ const x = i%NW, y = (i/NW)|0;
+          if(ink[i]){ ctx.fillStyle = target[i] ? '#0e6b3a' : '#5cbf60'; ctx.fillRect(x,y,1,1); continue; }
+          if(target[i]){ const edge = !target[i-1] || !target[i+1] || !target[i-NW] || !target[i+NW]; ctx.fillStyle = edge ? (((x+y)&1) ? '#5cbf60' : '#e3f4e2') : '#e3f4e2'; ctx.fillRect(x,y,1,1); } } };
+      paint();
+      let drawing = false, last = null, lifts = 0, finished = false, nudged = false;
+      const pos = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX-r.left)/r.width*NW), Math.floor((e.clientY-r.top)/r.height*NH)]; };
+      const dab = (x,y) => { for(let j=-3;j<=3;j++) for(let i=-3;i<=3;i++) if(i*i+j*j<=10){ const X=x+i, Y=y+j; if(X>=0&&Y>=0&&X<NW&&Y<NH) ink[Y*NW+X] = 1; } };
+      const lineTo = (a,b) => { const n = Math.max(Math.abs(b[0]-a[0]), Math.abs(b[1]-a[1]), 1); for(let k=0;k<=n;k++) dab(Math.round(a[0]+(b[0]-a[0])*k/n), Math.round(a[1]+(b[1]-a[1])*k/n)); };
+      cv.onpointerdown = e => { if(finished) return; drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); dab(...last); paint(); };
+      cv.onpointermove = e => { if(!drawing) return; const q = pos(e); lineTo(last, q); last = q; paint(); };
+      cv.onpointerup = cv.onpointercancel = () => { if(!drawing) return; drawing = false; lifts++;
+        const hit = pts.filter(i=>ink[i]).length; const cov = pts.length ? hit/pts.length : 1;
+        if(cov >= .6 || (lifts >= 5 && cov >= .35)){ finished = true; onDone(); }
+        else if(lifts >= 2 && !nudged && onMore){ nudged = true; onMore(); } };
+      return {clear(){ ink.fill(0); lifts = 0; paint(); }};
+    }
+  };
+}
+
+/* ---- write the letter with a finger: first on its own, then as it starts a word (its
+   initial form, so «مـ» for موز; letters that never join on the left keep one form) */
+function writeAct(stId, idx, a){
+  const L = a.letter, [word, spr] = WRITE_WORDS[L] || [];
+  const joins = !'اأإآدذرزوؤة'.includes(L);
+  const rounds = [{g:L}, ...(word ? [{g:joins ? L + '\u0640' : L, word, spr}] : [])];
+  frame(stId, ACT_INFO.write.title(a), rounds.length);
+  let r = 0; const t0 = Date.now();
+  const round = () => {
+    setDots(r, rounds.length); const rd = rounds[r];
+    const board = traceBoard(rd.g, () => { sfx.ok(); mood('cheer'); say('traceDone');
+        logAttempt({station:stId, act:'write', skill:'trace', item:L, level:r+1, errors:0, firstTry:true, ms:Date.now()-t0});
+        r++; setDots(r, rounds.length);
+        if(r < rounds.length) later(round, 1700); else later(() => { mood('celebrate'); say('actDone'); completeAct(stId, idx, play()); }, 1500); },
+      () => { mood('help'); say('traceMore'); });
+    play().innerHTML = `${TX.label(rd.word ? `حرف ${L} في أول كلمة ${rd.word}` : 'مرّر إصبعك فوق الحرف','#6b6450')}
+      <div class="row center">${rd.word ? `<div class="pbtn card wordcard" aria-hidden="true">${S_(rd.spr)}${T(rd.word,{size:13, color:'#0e6b3a'})}</div>` : ''}${board.html}</div>
+      ${btn({id:'clr', label:'امسح وحاول'})}`;
+    const b = board.mount(); $('#clr').onclick = () => { sfx.tap(); b.clear(); };
+    const intro = () => { mood('happy'); rd.word ? say('writeWord', {l:L, w:rd.word}) : say('letterTrace', {l:L}); };
+    intro(); onReplay(intro);
+  };
+  round();
 }
 
 /* ---- counting (adaptive difficulty 1–3) */
@@ -704,7 +749,7 @@ function shapesAct(stId, idx){
     bins:kinds.map(k=>({id:k, name:VOICE['shape_'+k], icon:dyn(`sh_${k}_10_e`, shapeRows(k,10,'e'))})), items, itemVoice:it=>VOICE['shape_'+it.bin]});
 }
 function classifyAct(stId, idx){
-  const pool = {plant:[['seedling','نبتة'],['tree','شجرة'],['rose','وردة']], mountain:[['mountain','جبل'],['rock','صخرة']], sea:[['fish','سمكة'],['shell','صدفة'],['boat','قارب'],['wave','موجة']]};
+  const pool = CLASSIFY_POOL;
   const items = shuffle([...Object.entries(pool).map(([bin,arr])=>{ const [s,w] = pick(arr); return {bin,s,w}; }),
     ...shuffle(Object.entries(pool).flatMap(([bin,arr])=>arr.map(([s,w])=>({bin,s,w})))).slice(0,3)]).slice(0,6)
     .map(o=>({bin:o.bin, w:o.w, html:`<div class="col">${S_(o.s)}${TX.label(o.w,'#0e6b3a')}</div>`}));

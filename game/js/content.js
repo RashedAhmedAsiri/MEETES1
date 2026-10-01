@@ -11,6 +11,7 @@ const VOICE = {
   chooseFriend: 'اختر صديقك للمغامرة',
   askName:      'ما اسمك؟ اختر رمزًا، أو اكتب اسمك.',
   hello:        'أهلًا يا {name}! هيا بنا.',
+  helloHero:    'أهلًا يا بطل! هيا بنا.',
   whereToday:   'أين سنذهب اليوم؟',
   locked:       'هذه المحطة تفتح بعد {prev}.',
   walk:         'هيا إلى {name}!',
@@ -28,6 +29,8 @@ const VOICE = {
   letterMatch:  'هذا حرف {l}. أي صورة تبدأ به؟',
   letterTrace:  'هيا نكتب حرف {l} بإصبعك.',
   traceDone:    'رائع! كتبت الحرف!',
+  traceMore:    'أكمل الحرف كله بإصبعك.',
+  writeWord:    'وهذا حرف {l} في أول كلمة {w}. اكتبه بإصبعك.',
   hunt:         'أين حرف {l}؟ اضغط على كل حرف {l}.',
   pairs:        'طابق كل حرف مع صورته. اضغط على الحرف، ثم على الصورة.',
   pairOk:       '{l}… {w}!',
@@ -86,29 +89,34 @@ const LETTERS = {
   'ل': {sound:'لَ', good:['لؤلؤة','ليمون'], bad:['سمكة','قمر','بيت'], tiles:['ل','ا','ك']},
 };
 
+/* the write activity's second round: a word that starts with the letter, and its picture */
+const WRITE_WORDS = {'م':['موز','banana'], 'ن':['نخلة','palm'], 'ج':['جمل','camel'], 'ع':['علم','i_flag'],
+  'أ':['أسد','lion'], 'ل':['ليمون','lemon'], 'ت':['تمر','dates']};
+
 /* stations in the order the map reveals them */
 const STATIONS = [
   {id:'makkah', name:'مكة المكرمة', short:'مكة', icon:'st_makkah', pos:[40.3,21.3], theme:'الكعبة المشرفة والجبال',
-   acts:[{type:'letter', letter:'م'}, {type:'count', item:'pilgrim'}]},
+   acts:[{type:'letter', letter:'م'}, {type:'write', letter:'م'}, {type:'count', item:'pilgrim'}]},
   {id:'madinah', name:'المدينة المنورة', short:'المدينة', icon:'st_madinah', pos:[39.6,24.9], theme:'النخيل والتمور',
-   acts:[{type:'letter', letter:'ن'}, {type:'pairs', pairs:[['ن','نخلة'],['م','مسجد'],['ب','بيت']]}]},
+   acts:[{type:'letter', letter:'ن'}, {type:'write', letter:'ن'}, {type:'pairs', pairs:[['ن','نخلة'],['م','مسجد'],['ب','بيت']]}]},
   {id:'riyadh', name:'الرياض', short:'الرياض', icon:'st_riyadh', pos:[46.7,24.6], theme:'العاصمة والتقنية والمستقبل',
    acts:[{type:'order'}, {type:'path'}]},
   {id:'jeddah', name:'جدة', short:'جدة', icon:'st_jeddah', pos:[38.9,22.9], theme:'البحر والسفن',
-   acts:[{type:'letter', letter:'ج'}, {type:'count', item:'boat'}, {type:'beach'}]},
+   acts:[{type:'letter', letter:'ج'}, {type:'write', letter:'ج'}, {type:'count', item:'boat'}, {type:'beach'}]},
   {id:'alula', name:'العلا', short:'العلا', icon:'st_alula', pos:[37.9,26.9], theme:'الجبال والصخور والتراث',
-   acts:[{type:'size'}, {type:'shapes'}, {type:'hunt', letter:'ع', others:['غ','ف','ق','ح','ه','م']}]},
+   acts:[{type:'size'}, {type:'shapes'}, {type:'hunt', letter:'ع', others:['غ','ف','ق','ح','ه','م']}, {type:'write', letter:'ع'}]},
   {id:'abha', name:'أبها', short:'أبها', icon:'st_abha', pos:[42.9,18.8], theme:'الطبيعة والجبال والنبات',
-   acts:[{type:'classify'}, {type:'hunt', letter:'أ', others:['ل','ب','ت','د','ر','ك']}]},
+   acts:[{type:'classify'}, {type:'hunt', letter:'أ', others:['ل','ب','ت','د','ر','ك']}, {type:'write', letter:'أ'}]},
   {id:'east', name:'المنطقة الشرقية', short:'الشرقية', icon:'st_east', pos:[49.2,26.2], theme:'البحر واللؤلؤ والطاقة',
-   acts:[{type:'pairs', pairs:[['ل','لؤلؤة'],['ن','نجمة'],['ت','تمر']]}, {type:'count', item:'pearl'}]},
+   acts:[{type:'pairs', pairs:[['ل','لؤلؤة'],['ن','نجمة'],['ت','تمر']]}, {type:'write', letter:'ل'}, {type:'count', item:'pearl'}]},
   {id:'qassim', name:'القصيم', short:'القصيم', icon:'st_qassim', pos:[43.8,26.6], theme:'الزراعة والتمور والنخيل',
-   acts:[{type:'letter', letter:'ت'}, {type:'numqty'}]},
+   acts:[{type:'letter', letter:'ت'}, {type:'write', letter:'ت'}, {type:'numqty'}]},
 ];
 const TOTAL_ACTS = STATIONS.reduce((n,s)=>n+s.acts.length,0) + 4;
 
 const ACT_INFO = {
   letter: {icon:'star',     title:a=>`حرف ${a.letter}`,  sub:'استمع وابحث عن الصور'},
+  write:  {icon:'pencil',   title:a=>`اكتب حرف ${a.letter}`, sub:'بإصبعك'},
   count:  {icon:'pilgrim',  title:a=>({pilgrim:'هيا نعد', boat:'كم قاربًا؟', pearl:'كم لؤلؤة؟'})[a.item], sub:'عد واختر الرقم'},
   beach:  {icon:'bin',      title:()=>'نظّف الشاطئ',      sub:'نشاط تفاعلي'},
   order:  {icon:'blocks',   title:()=>'رتب الأرقام',       sub:'من الصغير إلى الكبير'},
@@ -122,6 +130,10 @@ const ACT_INFO = {
 };
 ACT_INFO.letter.iconFor = a => ({'م':'mosque','ن':'palm','ج':'camel','ت':'dates'})[a.letter] || 'star';
 ACT_INFO.count.iconFor = a => ({pilgrim:'pilgrim', boat:'boat', pearl:'pearl'})[a.item];
+
+/* Abha's sorting game: pictures that live with plants, on the mountain or in the sea [sprite, word] */
+const CLASSIFY_POOL = {plant:[['seedling','نبتة'],['tree','شجرة'],['rose','وردة']], mountain:[['mountain','جبل'],['rock','صخرة']],
+  sea:[['fish','سمكة'],['shell','صدفة'],['boat','قارب'],['wave','موجة']]};
 
 const SYMBOLS = [['star','نجمة'],['camel','جمل'],['palm','نخلة'],['moon','هلال'],['boat','قارب'],['rose','وردة'],['crown','تاج'],['fish','سمكة']];
 

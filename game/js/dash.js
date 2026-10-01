@@ -173,6 +173,7 @@ function simKid([name, avatar, symbol, nDone, extra, ab, weak], i){
     else if(a.type === 'shapes'){ const w = weak.includes('visual');
       for(const q of ['circle','square','triangle','circle','triangle','square']){ const e = w ? (R() < .5 ? 1 : 0) : (R() < ab ? 0 : (R() < .4 ? 1 : 0)); add({station:sid, act:'sort', skill:'visual', item:q, errors:e, firstTry:!e}); } }
     else if(a.type === 'classify'){ for(const q of ['plant','sea','mountain','sea','plant','mountain']){ const e = R() < ab ? 0 : (R() < .5 ? 1 : 0); add({station:sid, act:'sort', skill:'classify', item:q, errors:e, firstTry:!e}); } }
+    else if(a.type === 'write') add({station:sid, act:'write', skill:'trace', item:a.letter, level:1, errors:0, firstTry:true});
     else if(a.type === 'hunt'){ const L = a.letter; const e = weak.includes(L) ? 2 + (R() < .5 ? 1 : 0) : e01();
       add({station:sid, act:'hunt', skill:'find', item:L, errors:e, firstTry:e <= 1}); p.skills['l_'+L] = {runs:1, clean:e <= 1 ? 1 : 0, lastSupport:e >= 2}; }
     const rec = p.st[sid] ||= {acts:{}, done:null}; rec.acts[ai] = true; p.stars++;
@@ -251,6 +252,7 @@ function actLabel(e){
   const L = e.item;
   switch(e.act){
     case 'letter': return ({find:`${harf(L)}: البحث بالصور`, hear:`${harf(L)}: سماع الصوت`, match:`${harf(L)}: مطابقة بالصورة`, trace:`${harf(L)}: التتبع`, run:`${harf(L)}`})[e.skill] || `${harf(L)}`;
+    case 'write': return `${harf(L)}: الكتابة بالإصبع`;
     case 'count': return `العد: ${num(e.item)}`;
     case 'beach': return 'تنظيف الشاطئ';
     case 'order': return 'ترتيب الأرقام';
