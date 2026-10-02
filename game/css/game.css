@@ -60,7 +60,7 @@ button{font:inherit;color:inherit;margin:0}
 .splash.land .fore{margin:auto auto 0;padding-top:calc(var(--u)*4)}   /* wide screens: title block low, the sky above it free for the flag */
 .splash .logo2{margin-top:calc(var(--u)*-16)}
 .narrow .splash .fore{row-gap:calc(var(--u)*2);padding-top:calc(var(--u)*5)}
-.splash .credit{grid-area:credit;opacity:.9}
+.splash .credit{grid-area:credit;background:var(--paper);clip-path:var(--clip);padding:0 calc(var(--u)*3)}   /* a paper plate keeps the name readable over the busy city */
 .splash.short .fore{grid-template-areas:"logo who" "tag who" "btns credit"}   /* short wide screens: the credit sits under Barem */
 .splash.short .credit{align-self:end}
 .splash .flagimg{position:absolute;pointer-events:none}
