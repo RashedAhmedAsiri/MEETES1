@@ -233,6 +233,8 @@ function splash(){
   const logoSize = NARROW ? 26 : 32;
   const adult = (id, label) => `<button class="pbtn sand" id="${id}" aria-label="${label}">${TX.small(label, '#1b1e2b')}</button>`;
   const land = !(AP.h > AP.w*1.15);               // same test as the title scene's own layout
+  // the two credit lines sit under Barem on short wide screens; on the narrowest of those a smaller size keeps them on screen
+  const creditSize = land && AP.h < 230 && AP.w < 380 ? 9 : 11;
   show(`<section class="screen splash ${land ? 'land' : ''} ${land && AP.h < 230 ? 'short' : ''}">
     <div class="bg">${sceneTag('splash', bgW, bgH)}</div>
     <div class="corner">${adult('toParent', 'ولي الأمر')}${adult('toTeacher', 'المعلمة')}</div>
@@ -242,7 +244,7 @@ function splash(){
       <div class="pan tagp">${T('نتعلم وطننا… ونبني مستقبلنا',{size:13, color:'#0e6b3a', maxW:AP.w - 30})}</div>
       <div class="who">${bubble(NARROW?110:120, VOICE.welcome)}<div id="bw">${B_('wave')}</div></div>
       <div class="row center btns">${btn({id:'go', cls:'green big', label:'ابدأ المغامرة', icon:'i_play'})}${p ? btn({id:'cont', cls:'big', label:'متابعة '+p.name}) : ''}</div>
-      <div class="credit">${T(CREDIT, {size:11, color:'#4a2e1c'})}</div>
+      <div class="credit">${T(CREDIT, {size:creditSize, color:'#4a2e1c'})}</div>
     </div>
   </section>`, {fn:splash, safe:true});
   placeFlag(land);

@@ -225,11 +225,11 @@ SCENES.riyadh = k => {
   dust(sc(18), .6, DUST);
 
   /* ---------- Kingdom Centre: broad south face with straight sides (as wide at the top); in the top
-     third an inverted parabolic opening splits it into two horns that thin to sharp points;
-     the sky bridge spans the opening just below the tips */
+     third an inverted parabolic opening splits it into two horns; the sky bridge spans the
+     opening at the very top, level with them, so the top is one straight line */
   {
     const hb = kh*.132;                                    // half-width at the foot
-    const u0 = .645, uB = .962;
+    const u0 = .645, uB = 1;
     const outer = () => hb;                                // straight sides: as wide at the top as at the foot
     const vt = outer(1) - .45;                             // opening half-width at the very top
     const inner = u => u <= u0 ? -1 : vt*Math.pow((u - u0)/(1 - u0), .45);

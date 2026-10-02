@@ -70,8 +70,8 @@ const VOICE = {
   medal:        'أحسنت يا بطل! أنت الآن برعم من براعم وطن طموح!',
 };
 /* the one normalization of spoken text: game.js and tools/voice both key clips by it */
-/* who made the game, shown on the title screen and in the adults' settings */
-const CREDIT = 'من إعداد: راشد أحمد عسيري';
+/* who made the game, shown on the title screen and in the adults' settings (two lines) */
+const CREDIT = 'إعداد: نسرين محمود جان\nبرمجة وتصميم: راشد أحمد عسيري';
 
 const voiceKey = text => String(text).replace(/[«»"'“”‘’]/g, '').replace(/\s+/g, ' ').trim();
 const NUM_WORDS = ['صفر','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة'];

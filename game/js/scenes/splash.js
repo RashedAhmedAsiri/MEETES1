@@ -252,12 +252,13 @@ SCENES.splash = k => {
   };
 
   /* Kingdom Centre: broad south face of the almond-plan tower, straight sides (it does not narrow
-     towards the top), parabolic opening and sky bridge */
+     towards the top), parabolic opening, and the sky bridge across the very top, level with the
+     horns, so the top is one straight line */
   const kingdom = (cx, h, hw0) => {
     const top = yb - h, v0 = .645;
     const hwAt = () => hw0;                                        // straight sides: as wide at the top as at the foot
     const hwTop = hwAt(1), th = Math.max(2, Math.round(hwTop*.3)), hiTop = hwTop - th + .3;
-    const brH = h >= 110 ? 2 : 1, yBr = top + Math.max(1, Math.round(h*.022));
+    const brH = h >= 110 ? 2 : 1, yBr = top;                     // the bridge closes the top, level with the horns
     const hiAt = v => v <= v0 ? -1 : hiTop*Math.pow((v - v0)/(1 - v0), .42);
     const hole = (x, y) => { const hi = hiAt((yb - y)/h); return hi > 0 && Math.abs(x - cx) < hi - .2; };
     const K = KG.map(kk => hz(kk, .08)), n = K.length - 1;
