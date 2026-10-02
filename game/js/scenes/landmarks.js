@@ -1,6 +1,6 @@
 /* scenes/landmarks.js — Riyadh's real towers, drawn to their real proportions, shared by the
    title screen and the Riyadh station so both show the same buildings.
-   - Kingdom Centre (302 m): a broad tower whose sides curve in towards the top; the top third
+   - Kingdom Centre (302 m): a broad tower with straight sides, as wide at the top; the top third
      is the big U-shaped opening, widest under the sky bridge, between two horns that thin as
      they rise; a low mall podium at its foot. Silver-blue glass.
    - Al Faisaliah (267 m): a slender pyramid on four white concrete corner columns; glass
@@ -20,8 +20,8 @@ const C = h => RGB[h] || (RGB[h] = hexRGB(h));
 function kingdomGeom(h){
   const hb = Math.max(6, Math.round(h*.145));
   const u0 = .64;                                                  // foot of the opening
-  const ho = u => hb*(1 - .15*u - .3*Math.pow(u, 2.5));            // outer half width: a slight taper that curves in towards the top
-  const A = Math.max(1, ho(1) - Math.max(2, hb*.12));              // half the opening's width under the bridge
+  const ho = () => hb;                                             // outer half width: straight sides, as wide at the top as at the foot
+  const A = Math.max(1, hb - Math.max(2, hb*.2));                  // half the opening's width under the bridge
   const hi = u => u <= u0 ? -1 : A*Math.sqrt(1 - Math.pow(1 - (u - u0)/(1 - u0), 2.2));   // a U: round foot, nearly straight sides
   return {hb, u0, ho, hi};
 }
