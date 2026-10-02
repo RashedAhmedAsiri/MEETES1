@@ -15,14 +15,14 @@ const VOICE = {
   whereToday:   'أين سنذهب اليوم؟',
   locked:       'هذه المحطة تفتح بعد {prev}.',
   walk:         'هيا إلى {name}!',
-  intro_makkah: 'مكة المكرمة، منبع الرسالة.',
-  intro_madinah:'المدينة المنورة، دار الهجرة.',
-  intro_riyadh: 'الرياض، عاصمة القرار.',
-  intro_jeddah: 'جدة، عروس البحر الأحمر.',
-  intro_alula:  'العلا، المتحف المفتوح.',
+  intro_makkah: 'مكة المكرمة، منبع\u00a0الرسالة.',
+  intro_madinah:'المدينة المنورة، دار\u00a0الهجرة.',
+  intro_riyadh: 'الرياض، عاصمة\u00a0القرار.',
+  intro_jeddah: 'جدة، عروس البحر\u00a0الأحمر.',
+  intro_alula:  'العلا، المتحف\u00a0المفتوح.',
   intro_abha:   'أبها البهية.',
-  intro_east:   'الشرقية، عاصمة الطاقة.',
-  intro_qassim: 'القصيم، سلة غذاء المملكة.',
+  intro_east:   'الشرقية، عاصمة\u00a0الطاقة.',
+  intro_qassim: 'القصيم، سلة\u00a0غذاء المملكة.',
   letterListen: 'استمع… {s}',
   letterFind:   'اضغط على الصور التي تبدأ بحرف {l}.',
   letterHear:   'استمع جيدًا… {s}. أين هذا الحرف؟',
@@ -70,8 +70,8 @@ const VOICE = {
   medal:        'أحسنت يا بطل! أنت الآن برعم من براعم وطن طموح!',
 };
 /* the one normalization of spoken text: game.js and tools/voice both key clips by it */
-/* who made the game, shown on the title screen and in the adults' settings */
-const CREDIT = 'من إعداد: راشد أحمد عسيري';
+/* who made the game, shown on the title screen and in the adults' settings (two lines) */
+const CREDIT = 'إعداد: نسرين محمود جان\nبرمجة وتصميم: راشد أحمد عسيري';
 
 const voiceKey = text => String(text).replace(/[«»"'“”‘’]/g, '').replace(/\s+/g, ' ').trim();
 const NUM_WORDS = ['صفر','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة'];
