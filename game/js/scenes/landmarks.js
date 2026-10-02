@@ -1,11 +1,11 @@
 /* scenes/landmarks.js — Riyadh's real towers, drawn to their real proportions, shared by the
    title screen and the Riyadh station so both show the same buildings.
    - Kingdom Centre (302 m): a broad tower whose sides curve in towards the top; the top third
-     is the big rounded "bottle-opener" opening, two thin horns joined at the top by the sky
-     bridge; a low mall podium at its foot. Silver-blue glass.
+     is the big U-shaped opening, widest under the sky bridge, between two horns that thin as
+     they rise; a low mall podium at its foot. Silver-blue glass.
    - Al Faisaliah (267 m): a slender pyramid on four white concrete corner columns; glass
-     between them up to about half height, then an open frame that hugs the golden glass
-     globe and closes into the spire.
+     between them up to about half height, then an open frame that holds the golden glass
+     globe (the front columns pass in front of its sides) and closes into the spire.
    - KAFD towers: the PIF Tower with its faceted crystal crown and plainer glass neighbours.
    - Low Najdi-style city: sand-coloured flat-roofed blocks with crenellated parapets.
    Every function draws on a scene raster (R.set) with a palette of hex colours, lit from the left. */
@@ -14,17 +14,26 @@ const LANDMARKS = (() => {
 const RGB = {};
 const C = h => RGB[h] || (RGB[h] = hexRGB(h));
 
+/* ---------- Kingdom Centre geometry for a tower h rows tall (to the top of the sky bridge):
+   hb half the base width, ho(u) outer half width and hi(u) half width of the opening at
+   u = height / h (hi < 0 below the opening) */
+function kingdomGeom(h){
+  const hb = Math.max(6, Math.round(h*.145));
+  const u0 = .64;                                                  // foot of the opening
+  const ho = u => hb*(1 - .15*u - .3*Math.pow(u, 2.5));            // outer half width: a slight taper that curves in towards the top
+  const A = Math.max(1, ho(1) - Math.max(2, hb*.12));              // half the opening's width under the bridge
+  const hi = u => u <= u0 ? -1 : A*Math.sqrt(1 - Math.pow(1 - (u - u0)/(1 - u0), 2.2));   // a U: round foot, nearly straight sides
+  return {hb, u0, ho, hi};
+}
+
 /* ---------- Kingdom Centre. cx: axis, gy: ground row, h: height to the top of the sky bridge.
    P: {rim, lit, mid, sh, dk, deep, bridge, bridgeS, pod, podL, podS, podG} */
 function kingdom(R, cx, gy, h, P){
   const set = (x, y, col) => R.set(x, y, C(col));
-  const hb = Math.max(6, Math.round(h*.145));                      // half the base width
-  const u0 = .64;                                                  // foot of the opening
-  const ho = u => hb*(1 - .55*Math.pow(u, 2.2));                   // outer half width
-  const th = u => Math.max(2, hb*(.27 - .07*(u - u0)/(1 - u0)));   // horn thickness
-  const hi = u => u <= u0 ? -1 : (ho(u) - th(u))*Math.sqrt(Math.min(1, (u - u0)/.07));   // rounded U bottom
+  const {hb, u0, ho, hi} = kingdomGeom(h);
   const top = gy - h, brH = h >= 70 ? 2 : 1;
   const tones = [P.lit, P.mid, P.sh, P.dk];
+  const sky = (y, dx) => { const u = (gy - y)/h, v = hi(u); return y >= top + brH && v >= 0 && Math.abs(dx) <= Math.round(v - .25); };
   for(let y=top; y<=gy; y++){
     const u = (gy - y)/h, HO = Math.round(ho(u)), hiv = hi(u), HI = hiv < 0 ? -1 : Math.round(hiv - .25);
     const bridge = y < top + brH;
@@ -42,13 +51,11 @@ function kingdom(R, cx, gy, h, P){
         if(HI >= 0 && dx === HI + 1 && dx < HO) col = P.rim;       // right horn's inner face catches the sun
         if(HI >= 0 && dx === -HI - 1 && dx > -HO) col = P.deep;    // left horn's inner face in shade
         if(dx === HO) col = P.deep;
+        if(sky(y - 1, dx) && !sky(y, dx)) col = P.rim;             // the round foot of the opening catches the light
       }
       set(cx + dx, y, col);
     }
   }
-  // the sill at the bottom of the opening catches the light
-  { const yb = gy - Math.round(h*u0) - 1, w = Math.round(hi(u0 + .07)*.6);
-    for(let dx=-w; dx<=w; dx++) set(cx + dx, yb, P.rim); }
   // mall podium
   const ph = Math.max(2, Math.round(h*.05)), pw = Math.round(hb*1.9);
   for(let y=gy-ph+1; y<=gy; y++) for(let dx=-pw; dx<=pw; dx++){
@@ -59,19 +66,31 @@ function kingdom(R, cx, gy, h, P){
   return {hb, top};
 }
 
+/* ---------- Al Faisaliah geometry for a tower h rows tall (to the spire tip): the corner columns
+   meet at row ja; the glass ends at jb; the globe (radius gr) is centred jg rows up. HW(j) is
+   the half width at row j: a gentle taper up the office floors that closes in faster round the
+   globe, wide enough there that the globe stays inside the frame. */
+function faisaliahGeom(h){
+  const fb = Math.max(3, h*.105), ja = Math.round(h*.87), jb = Math.round(h*.55);
+  const jg = Math.round(h*.73), gr = Math.max(2, Math.round(h*.04));
+  const qg = jg/ja, n = 5, T = Math.min(.9, (gr + .5)/fb);
+  const a = Math.max(0, Math.min(1, (1 - Math.pow(qg, n) - T)/(qg - Math.pow(qg, n))));
+  const HW = j => { const q = Math.min(1, j/ja); return fb*(1 - a*q - (1 - a)*Math.pow(q, n)); };
+  return {fb, ja, jb, jg, gr, HW};
+}
+
 /* ---------- Al Faisaliah. cx: axis, gy: ground row, h: height to the spire tip.
    P: {colL, colR, glassL, glassR, floor, ledge, gold0, gold1, gold2, gold3, spire} */
 function faisaliah(R, cx, gy, h, P){
   const set = (x, y, col) => R.set(x, y, C(col));
-  const fb = Math.max(3, h*.105), ja = Math.round(h*.86), jb = Math.round(h*.55);
-  const jg = Math.round(h*.715), gr = Math.max(2, Math.round(h*.045));
-  const HWf = j => { const q = j/ja; return fb*(1 - .45*q - .55*Math.pow(q, 4)); };   // straight taper that closes in round the globe
-  // the golden globe first; the corner columns pass in front of its sides
+  const {ja, jb, jg, gr, HW: HWf} = faisaliahGeom(h);
+  // the golden globe first; the front corner columns pass in front of its sides
   { const gyc = gy - jg;
     for(let dy=-gr; dy<=gr; dy++) for(let dx=-gr; dx<=gr; dx++){
       const d = dx*dx + dy*dy; if(d > gr*gr + gr*.6) continue;
-      const l = (-dx - dy)/(gr*1.4);                                // lit from the upper left
-      set(cx + dx, gyc + dy, l > .45 ? P.gold3 : l > -.1 ? P.gold2 : l > -.6 ? P.gold1 : P.gold0); }
+      const edge = d > (gr - 1)*(gr - 1) + (gr - 1)*.6;             // the rim stays darker than the white columns
+      const l = 1 - Math.hypot(dx + gr*.35, dy + gr*.35)/(gr*1.6);  // a highlight up on the left, the sun's side
+      set(cx + dx, gyc + dy, l > .7 && !edge ? P.gold3 : l > .4 && !edge ? P.gold2 : l > .1 ? P.gold1 : P.gold0); }
     for(let dx=-gr+1; dx<=gr-1; dx++) set(cx + dx, gyc + gr + 1, P.colR);   // the globe's platform
   }
   for(let j=0; j<ja; j++){
