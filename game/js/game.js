@@ -233,8 +233,8 @@ function splash(){
   const logoSize = NARROW ? 26 : 32;
   const adult = (id, label) => `<button class="pbtn sand" id="${id}" aria-label="${label}">${TX.small(label, '#1b1e2b')}</button>`;
   const land = !(AP.h > AP.w*1.15);               // same test as the title scene's own layout
-  // the two credit lines sit under Barem on short wide screens; on the narrowest of those a smaller size keeps them on screen
-  const creditSize = AP.w < 190 ? 10 : land && AP.h < 230 && AP.w < 380 ? 9 : 11;   // 360 px phones: the two lines at 11 are 4 px wider than the screen
+  // the credit sits under Barem on short wide screens; on the narrowest of those a smaller size keeps it on screen
+  const creditSize = AP.w < 190 ? 10 : land && AP.h < 230 && AP.w < 380 ? 9 : 11;   // 360 px phones: the line at 11 is 4 px wider than the screen
   show(`<section class="screen splash ${land ? 'land' : ''} ${land && AP.h < 230 ? 'short' : ''}">
     <div class="bg">${sceneTag('splash', bgW, bgH)}</div>
     <div class="corner">${adult('toParent', 'ولي الأمر')}${adult('toTeacher', 'المعلمة')}</div>

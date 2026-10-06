@@ -12,8 +12,8 @@ import os, re, shutil, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 GAME = os.path.normpath(os.path.join(HERE, '..', '..', 'game'))
 TITLE = 'مغامرة برعم في وطننا'
-AUTHOR = 'راشد أحمد عسيري، نسرين محمود جان'
-DESC = 'لعبة تعليمية للأطفال: نتعلم الحروف والأرقام في رحلة عبر مدن المملكة. برمجة وتصميم: راشد أحمد عسيري، إعداد: نسرين محمود جان.'
+AUTHOR = 'راشد أحمد عسيري'
+DESC = 'لعبة تعليمية للأطفال: نتعلم الحروف والأرقام في رحلة عبر مدن المملكة. برمجة وتصميم: ' + AUTHOR + '.'
 
 HEAD = f"""<!doctype html>
 <html lang="ar" dir="rtl">
